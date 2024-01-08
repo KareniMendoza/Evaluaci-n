@@ -1,0 +1,120 @@
+// Creando un indice
+PUT log_consultas/_doc/1
+{
+  "@timestamp": "2010-05-15T22:00:54",
+  "estado_consulta": "consumo",
+  "servicio": "consulta",
+  "administrador": "Juan Carlos",
+  "consultas_realizadas": 52
+}
+
+// Obteniendo el mapping del indice anterior
+GET log_consultas/_mapping
+
+// Creando un template a partir del mapping 
+PUT _index_template/template_1
+{
+  "index_patterns": ["log_consultas"],
+  "template": {
+    "settings": {
+      "number_of_shards": 2
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "administrador": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "consultas_realizadas": {
+          "type": "long"
+        },
+        "estado_consulta": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "servicio": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Comprobación para obtener el template específicado después de cargar el documento .JSON utilizando el API (Bulk)
+GET _index_template/template_1
+
+// Comprobación de carga para obtener el registo #299 del indice específicado
+GET /log_consultas/_doc/299
+
+//----------------------Busquedas de indice---------------------------------
+
+// 1. Obtener el número de registros con estado_consulta igual a error y consumo 
+GET /log_consultas/_search
+{
+  "query": {
+    "terms": {
+      "estado_consulta": ["error", "consumo"]
+    }
+  },
+  "size": 0
+}
+
+// 2. Obtener el número de registros realizados por el administrador Juan Lara.
+
+GET /log_consultas/_search
+{
+  "size": 0,
+  "query": {
+    "term": {
+      "administrador.keyword": "Juan Lara"
+    }
+  }
+}
+
+// 3. Obtener el número de registros con estado_consulta igual a informativo y servicio igual a borrado
+
+GET /log_consultas/_search
+{
+  "size": 0,
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "estado_consulta.keyword": "informativo" }},
+        { "term": { "servicio.keyword": "borrado" }}
+      ]
+    }
+  }
+}
+
+// 4. Obtener la suma de los valores en consultas_realizadas con estado_consulta igual a error
+
+GET /log_consultas/_search
+{
+  "size": 0,
+  "query": {
+    "term": {
+      "estado_consulta": "error"
+    }
+  }
+}
+
+
